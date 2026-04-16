@@ -1,0 +1,36 @@
+name: Crunch into Single HTML
+
+# This lets you run the script manually by clicking a button
+on: [workflow_dispatch] 
+
+jobs:
+  build-single-file:
+    runs-on: ubuntu-latest # GitHub boots up a cloud computer
+
+    steps:
+      - name: Grab the Game Code
+        uses: actions/checkout@v4
+
+      - name: Install the C++ to Web Translator
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Install the Builder Bots (Meson & Ninja)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip ninja-build
+          pip3 install meson
+
+      - name: CRUNCH THE MONSTER
+        run: |
+          # This forces the translator to pack it into ONE file
+          export LDFLAGS="-s SINGLE_FILE=1"
+          
+          # The Powder Toy's specific build commands
+          meson setup builddir --cross-file resources/emscripten.txt
+          ninja -C builddir
+
+      - name: Hand over the HTML File!
+        uses: actions/upload-artifact@v4
+        with:
+          name: Playable-HTML-File
+          path: builddir/*.html
